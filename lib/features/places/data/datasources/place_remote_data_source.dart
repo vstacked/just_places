@@ -1,5 +1,5 @@
 import 'package:dio/dio.dart';
-import 'package:firebase_analytics/firebase_analytics.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:just_places/core/utils/app_error.dart';
 import 'package:just_places/features/places/data/models/estimate_model.dart';
 import 'package:just_places/features/places/data/models/place_model.dart';
@@ -22,7 +22,7 @@ class PlaceRemoteDataSourceImpl implements IPlaceRemoteDataSource {
 
   PlaceRemoteDataSourceImpl(this.dio);
 
-  final FirebaseAnalytics _analytics = FirebaseAnalytics.instance;
+  final FirebaseCrashlytics _crashlytics = FirebaseCrashlytics.instance;
 
   @override
   Future<List<Place>> getAutocomplete(
@@ -45,17 +45,11 @@ class PlaceRemoteDataSourceImpl implements IPlaceRemoteDataSource {
           .toList();
     } catch (e, s) {
       if (e is! DioError) {
-        _analytics.logEvent(
-          name: '/place/autocomplete/json',
-          parameters: {'error': e, 'stacktrace': s},
-        );
+        await _crashlytics.recordError(e, s);
         throw const AppError('Error Occurred');
       }
 
-      _analytics.logEvent(
-        name: '/place/autocomplete/json',
-        parameters: {'error': e.error, 'stacktrace': e.stackTrace},
-      );
+      await _crashlytics.recordError(e.error, e.stackTrace);
       throw const AppError('Server Exception');
     }
   }
@@ -73,17 +67,11 @@ class PlaceRemoteDataSourceImpl implements IPlaceRemoteDataSource {
       );
     } catch (e, s) {
       if (e is! DioError) {
-        _analytics.logEvent(
-          name: placeId != null ? '/place/details/json' : '/geocode/json',
-          parameters: {'error': e, 'stacktrace': s},
-        );
+        _crashlytics.recordError(e, s);
         throw AppError(e.toString());
       }
 
-      _analytics.logEvent(
-        name: placeId != null ? '/place/details/json' : '/geocode/json',
-        parameters: {'error': e.error, 'stacktrace': e.stackTrace},
-      );
+      _crashlytics.recordError(e.error, e.stackTrace);
       throw AppError(e.message);
     }
   }
@@ -116,17 +104,11 @@ class PlaceRemoteDataSourceImpl implements IPlaceRemoteDataSource {
       throw Exception('Error');
     } catch (e, s) {
       if (e is! DioError) {
-        _analytics.logEvent(
-          name: '/distancematrix/json',
-          parameters: {'error': e, 'stacktrace': s},
-        );
+        _crashlytics.recordError(e, s);
         throw AppError(e.toString());
       }
 
-      _analytics.logEvent(
-        name: '/distancematrix/json',
-        parameters: {'error': e.error, 'stacktrace': e.stackTrace},
-      );
+      _crashlytics.recordError(e.error, e.stackTrace);
       throw AppError(e.message);
     }
   }

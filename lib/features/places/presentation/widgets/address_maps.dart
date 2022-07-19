@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
-import 'package:firebase_analytics/firebase_analytics.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -22,7 +22,7 @@ class AddressMaps extends StatefulWidget {
 }
 
 class AddressMapsState extends State<AddressMaps> {
-  final FirebaseAnalytics _analytics = FirebaseAnalytics.instance;
+  final FirebaseCrashlytics _crashlytics = FirebaseCrashlytics.instance;
 
   GlobalKey destinationIconKey = GlobalKey();
   GlobalKey originIconKey = GlobalKey();
@@ -113,9 +113,8 @@ class AddressMapsState extends State<AddressMaps> {
 
         final pngBytes = byteData!.buffer.asUint8List();
         return pngBytes;
-      } catch (e) {
-        _analytics
-            .logEvent(name: 'custom marker icon', parameters: {'error': e});
+      } catch (e, s) {
+        _crashlytics.recordError(e, s);
         throw Exception(e);
       }
     }
@@ -222,9 +221,9 @@ class AddressMapsState extends State<AddressMaps> {
           accuracy: LocationAccuracy.high, distanceFilter: 100);
     }
 
-    positionStream = Geolocator.getPositionStream(
-            locationSettings: locationSettings)
-        .listen((Position? position) {
+    positionStream =
+        Geolocator.getPositionStream(locationSettings: locationSettings)
+            .listen((Position? position) {
       if (position != null) {
         mapController!.animateCamera(
           CameraUpdate.newCameraPosition(
@@ -242,10 +241,7 @@ class AddressMapsState extends State<AddressMaps> {
         );
       }
     })
-      ..onError(
-        (e) =>
-            _analytics.logEvent(name: 'geolocator', parameters: {'error': e}),
-      );
+          ..onError((e, s) => _crashlytics.recordError(e, s));
   }
 
   void setRoute(LatLng origin, LatLng destination, ModeType mode) async {
@@ -300,10 +296,7 @@ class AddressMapsState extends State<AddressMaps> {
         polylineCoordinates.add(LatLng(point.latitude, point.longitude));
       }
     } else {
-      _analytics.logEvent(
-        name: 'polylinePoints',
-        parameters: {'error': result.errorMessage},
-      );
+      _crashlytics.recordError(result.errorMessage, null);
     }
 
     addPolyLine(polylineCoordinates);
