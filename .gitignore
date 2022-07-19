@@ -45,3 +45,12 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# fvm
+.fvm/flutter_sdk
+
+# build runner
+*.g.dart
+
+# Env
+*.env
